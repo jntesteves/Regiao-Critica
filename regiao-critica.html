@@ -42,7 +42,8 @@ body {
 
 .line {
     position: absolute;
-    border: 3px solid #f00;
+    border: 0;
+    border-bottom: 6px solid #f00;
     z-index: 1000;
 }
 </style>
@@ -51,14 +52,15 @@ body {
 <body>
 
     <div id="rec1" class="box2d rec">Recurso #1</div>
-    <div id="rec2" class="box2d rec">Recurso #1</div>
-    <div id="rec3" class="box2d rec">Recurso #1</div>
-    <div id="rec4" class="box2d rec">Recurso #1</div>
+    <div id="rec2" class="box2d rec">Recurso #2</div>
+    <div id="rec3" class="box2d rec">Recurso #3</div>
+    <div id="rec4" class="box2d rec">Recurso #4</div>
 
     <div id="proc1" class="box2d proc">Processo #1</div>
     <div id="proc2" class="box2d proc">Processo #2</div>
 
     <div id="line1" class="line"></div>
+    <div id="line2" class="line"></div>
 
 
 
@@ -1322,19 +1324,36 @@ var properties = [];
 
 var gravity = {x: 0, y: 1};
 
+var isRunningDynamics = false;
+var startDynamics = false; // if true, means dynamics simulation should start on next frame
+
+var lines = [];
+
 init();
 
 function init() {
 
+    document.addEventListener('mousedown', onDocumentMouseDown, false);
+    document.addEventListener('mouseup', onDocumentMouseUp, false);
+    document.addEventListener('mousemove', onDocumentMouseMove, false);
+
+    document.addEventListener('touchstart', onDocumentTouchStart, false);
+    document.addEventListener('touchmove', onDocumentTouchMove, false);
+    document.addEventListener('touchend', onDocumentTouchEnd, false);
+
     document.getElementById('proc1').addEventListener('mousedown', procCallback, false);
+
+    if (!isRunning) {
+        run();
+    }
 }
 
 function procCallback(event) {
 
     event.preventDefault();
 
-    var lineStart = [];
-    lineStart = findPos(event.target);
+    var lineStart = findPos(event.target);
+    lines.push({x: lineStart.x, y: lineStart.y, element: document.getElementById('line1')});
 }
 
 function findPos(obj) {
@@ -1350,19 +1369,13 @@ function findPos(obj) {
             y += obj.offsetTop;
             obj = obj.offsetParent;
         }
-        return [x, y];
+        return {x: x, y: y};
     }
 }
 
 function initDynamics() {
 
-    document.addEventListener('mousedown', onDocumentMouseDown, false);
-    document.addEventListener('mouseup', onDocumentMouseUp, false);
-    document.addEventListener('mousemove', onDocumentMouseMove, false);
-
-    document.addEventListener('touchstart', onDocumentTouchStart, false);
-    document.addEventListener('touchmove', onDocumentTouchMove, false);
-    document.addEventListener('touchend', onDocumentTouchEnd, false);
+    isRunningDynamics = true;
 
     window.addEventListener('deviceorientation', onWindowDeviceOrientation, false);
 
@@ -1506,34 +1519,47 @@ function onElementClick(event) {
 
 function loop() {
 
-    if (getBrowserDimensions()) {
-        setWalls();
+    for (var i = 0; i < lines.length; i++) {
+        //console.log(lines[i].x + ' - ' + lines[i].y + ' - ' + lines[i].element);
+        drawLine(lines[i].x, lines[i].y, mouse.x, mouse.y, lines[i].element)
     }
 
-    delta[0] += (0 - delta[0]) * .5;
-    delta[1] += (0 - delta[1]) * .5;
+    if (startDynamics) {
+        if (!isRunningDynamics) {
+            initDynamics();
+        }
+    }
 
-    world.m_gravity.x = gravity.x * 350 + delta[0];
-    world.m_gravity.y = gravity.y * 350 + delta[1];
+    if (isRunningDynamics) {
+        if (getBrowserDimensions()) {
+            setWalls();
+        }
 
-    mouseDrag();
-    world.Step(timeStep, iterations);
+        delta[0] += (0 - delta[0]) * .5;
+        delta[1] += (0 - delta[1]) * .5;
 
-    for (i = 0; i < elements.length; i++) {
+        world.m_gravity.x = gravity.x * 350 + delta[0];
+        world.m_gravity.y = gravity.y * 350 + delta[1];
 
-        var body = bodies[i];
-        var element = elements[i];
+        mouseDrag();
+        world.Step(timeStep, iterations);
 
-        element.style.left = (body.m_position0.x - (properties[i][2] >> 1)) + 'px';
-        element.style.top = (body.m_position0.y - (properties[i][3] >> 1)) + 'px';
+        for (i = 0; i < elements.length; i++) {
 
-        var style = 'rotate(' + (body.m_rotation0 * 57.2957795) + 'deg)';
+            var body = bodies[i];
+            var element = elements[i];
 
-        element.style.transform = style;
-        element.style.WebkitTransform = style + ' translateZ(0)'; // Force HW Acceleration
-        element.style.MozTransform = style;
-        element.style.OTransform = style;
-        element.style.msTransform = style;
+            element.style.left = (body.m_position0.x - (properties[i][2] >> 1)) + 'px';
+            element.style.top = (body.m_position0.y - (properties[i][3] >> 1)) + 'px';
+
+            var style = 'rotate(' + (body.m_rotation0 * 57.2957795) + 'deg)';
+
+            element.style.transform = style;
+            element.style.WebkitTransform = style + ' translateZ(0)'; // Force HW Acceleration
+            element.style.MozTransform = style;
+            element.style.OTransform = style;
+            element.style.msTransform = style;
+        }
     }
 }
 
@@ -1723,7 +1749,7 @@ function getBrowserDimensions() {
     return changed;
 }
 
-function drawLine(x1, y1, x2, y2, element) {
+function drawLine(x1, y1, x2, y2, line) {
     if (x2 < x1) {
 
         var temp = x1;
@@ -1734,16 +1760,13 @@ function drawLine(x1, y1, x2, y2, element) {
         y2 = temp;
     }
 
-    var line = element;
     var length = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
     line.style.width = length + "px";
-    console.log(line.style.width);
 
     var angle = Math.atan((y2 - y1) / (x2 - x1));
     line.style.top = y1 + 0.5 * length * Math.sin(angle) + "px";
     line.style.left = x1 - 0.5 * length * (1 - Math.cos(angle)) + "px";
-    line.style.MozTransform = line.style.WebkitTransform = line.style.OTransform = "rotate(" + angle + "rad)";
-    console.log(line.style.WebkitTransform);
+    line.style.transform = line.style.MozTransform = line.style.WebkitTransform = line.style.OTransform = line.style.MsTransform = "rotate(" + angle + "rad)";
 }
 
     ///***** END APLICATION CODE BLOCK *****///
