@@ -36,16 +36,35 @@ div {
 }
 
 .rec {
+    position: absolute;
     background-color: #dfd;
     border: 5px solid #070;
     width: 100px;
     height: 50px;
-    float: left;
-    margin-left: 40px;
+    top: 40px;
+}
+
+#rec1 {
+    left: 50px;
+}
+
+#rec2 {
+    left: 200px;
+}
+
+#rec3 {
+    left: 350px;
+}
+
+#rec4 {
+    left: 500px;
 }
 
 .subs {
-    margin: 10px;
+    position: absolute;
+    display: block;
+    top: 10px;
+    left: 20px;
 }
 
 .line {
@@ -59,7 +78,7 @@ div {
 
 <body>
 
-    <div class="box2d subs">Recursos não preemptivos</div>
+    <span class="box2d subs">Recursos não preemptivos</span>
     <div id="rec1" class="box2d rec">Recurso #1</div>
     <div id="rec2" class="box2d rec">Recurso #2</div>
     <div id="rec3" class="box2d rec">Recurso #3</div>
@@ -1388,16 +1407,22 @@ function recCallback(event) {
 
     event.preventDefault();
 
+    var count = 0;
     for (var i = 0; i < lines.length; i++) {
 
         if (lines[i].isActive === true) {
 
             var lineEnd = findPos(event.target);
-            console.log('x: ' + lineEnd.x + ' y: ' + lineEnd.y);
             lines[i].x2 = lineEnd.x;
             lines[i].y2 = lineEnd.y;
             lines[i].isActive = false;
+            lines[i].parent.style.backgroundColor = '#ff0';
+            count = count + 1;
         }
+    }
+
+    if (count > 1) {
+        initDynamics();
     }
 }
 
@@ -1419,6 +1444,12 @@ function findPos(obj) {
 }
 
 function initDynamics() {
+
+    for (var i = 0; i < lines.length; i++) {
+        lines[i].isActive = false;
+        lines[i].isDrawn = false;
+        lines[i].element.style.display = 'none';
+    }
 
     isRunningDynamics = true;
 
