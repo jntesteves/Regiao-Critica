@@ -24,15 +24,14 @@ div {
     border: 5px solid #070;
     width: 100px;
     height: 100px;
+    bottom: 15%;
 }
 
 #proc1 {
-    bottom: 10%;
     left: 10%;
 }
 
 #proc2 {
-    bottom: 10%;
     right: 10%;
 }
 
@@ -61,7 +60,7 @@ div {
     left: 500px;
 }
 
-.subs {
+#sub {
     position: absolute;
     display: block;
     top: 10px;
@@ -77,11 +76,17 @@ div {
 
 #leg {
     float: right;
+    margin-right: 15px;
 }
 
 #imgg, #imgy, #imgr {
-    width: 30px;
     height: 30px;
+}
+
+.subs {
+    display: block;
+    position: relative;
+    margin: -25px 10px 10px 10px;
 }
 
 #imgg {
@@ -95,12 +100,35 @@ div {
 #imgr {
     background-color: #f00;
 }
+
+#lang {
+    position: absolute;
+    left: 20px;
+    bottom: 10px;
+}
+
+.lang {
+    cursor: pointer;
+}
+
+#ops {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -36px 0 0 -236px;
+    font-size: 60px;
+    font-weight: bold;
+    text-shadow: #000 3px 3px;
+    color: #f00;
+    z-index: 1000;
+}
 </style>
 </head>
 
 <body>
 
-    <span class="box2d subs">Recursos não preemptivos:</span>
+    <span id ="sub" class="box2d">Recursos não preemptivos:</span>
     <div id="rec1" class="box2d rec">Recurso #1</div>
     <div id="rec2" class="box2d rec">Recurso #2</div>
     <div id="rec3" class="box2d rec">Recurso #3</div>
@@ -112,11 +140,19 @@ div {
     <div id="line1" class="line"></div>
     <div id="line2" class="line"></div>
 
+    <span id="ops">KERNEL PANIC!</span>
+
     <div id="leg">
-        <h3 class="box2d">Legenda:</h3>
-        <div id="imgg" class="box2d"></div><span class="box2d">Executando</span>
-        <div id="imgy" class="box2d"></div><span class="box2d">Executando região crítica</span>
-        <div id="imgr" class="box2d"></div><span class="box2d">Bloqueado</span>
+        <h3 id="legenda" class="box2d">Legenda:</h3>
+        <div id="imgg" class="box2d img"></div><span id="exec" class="box2d subs">Executando</span>
+        <div id="imgy" class="box2d img"></div><span id="crit" class="box2d subs">Executando região crítica</span>
+        <div id="imgr" class="box2d img"></div><span id="bloq" class="box2d subs">Bloqueado</span>
+    </div>
+
+    <div id="lang">
+        <span id="pt" class="box2d lang"> Português </span> -
+        <span id="en" class="box2d lang"> English </span> -
+        <span id="es" class="box2d lang"> Español </span>
     </div>
 
 
@@ -1400,6 +1436,10 @@ function init() {
     document.addEventListener('touchmove', onDocumentTouchMove, false);
     document.addEventListener('touchend', onDocumentTouchEnd, false);
 
+    document.getElementById('pt').addEventListener('click', translatePt, false);
+    document.getElementById('en').addEventListener('click', translateEn, false);
+    document.getElementById('es').addEventListener('click', translateEs, false);
+
     for (var i = 0; i < procs.length; i++) {
 
         procs[i].addEventListener('click', procCallback, false);
@@ -1418,39 +1458,102 @@ function init() {
 function procCallback(event) {
 
     event.preventDefault();
-    var lineStart = findPos(event.target);
+    var quit = false;
 
     if (event.target.id === 'proc1') {
 
+        for (var i = 0; i < lines.length; i++) {
+
+            if (lines[i].originNode.id === 'proc1') {
+                if (lines[i].isActive === true) {
+                    quit = true;
+                }
+                lines[i].isActive = false;
+                lines[i].isDrawn = false;
+                lines[i].element.style.display = 'none';
+            }
+        }
         var lineElement = document.getElementById('line1');
 
     } else if (event.target.id === 'proc2') {
 
+        for (var i = 0; i < lines.length; i++) {
+
+            if (lines[i].originNode.id === 'proc2') {
+                if (lines[i].isActive === true) {
+                    quit = true;
+                }
+                lines[i].isActive = false;
+                lines[i].isDrawn = false;
+                lines[i].element.style.display = 'none';
+            }
+        }
         var lineElement = document.getElementById('line2');
     }
-    lines.push({x: lineStart.x, y: lineStart.y, element: lineElement, isActive: true, isDrawn: true, parent: event.target, x2: null, y2: null});
+    event.target.style.backgroundColor = '#0f0';
+
+    if (quit === true) {
+        return;
+    }
+
+    var lineStart = findPos(event.target);
+    lineElement.style.display = 'block';
+    lines.push({x: lineStart.x, y: lineStart.y, element: lineElement, isActive: true, isDrawn: true, originNode: event.target, x2: null, y2: null, targetNode: null});
 }
 
 function recCallback(event) {
 
     event.preventDefault();
 
-    var count = 0;
+    var quit = false;
+    var staticLines = [];
+    var activeLine = null;
+    var lineCount = 0;
+
     for (var i = 0; i < lines.length; i++) {
 
-        if (lines[i].isActive === true) {
+        if (lines[i].isDrawn === true && lines[i].isActive === false) {
+            staticLines.push(lines[i]);
+        }
 
-            var lineEnd = findPos(event.target);
-            lines[i].x2 = lineEnd.x;
-            lines[i].y2 = lineEnd.y;
-            lines[i].isActive = false;
-            lines[i].parent.style.backgroundColor = '#ff0';
-            count = count + 1;
+        if (lines[i].isActive === true) {
+            activeLine = lines[i];
+            lineCount = lineCount + 1;
         }
     }
 
-    if (count > 1) {
-        initDynamics();
+    if (lineCount > 1) {
+        if (isRunningDynamics === false) {
+            initDynamics();
+        }
+    }
+
+    if (activeLine) {
+
+        activeLine.targetNode = event.target;
+
+        if (staticLines[0]) {
+            for (var i = 0; i < staticLines.length; i++) {
+
+                if (staticLines[i].targetNode.id === activeLine.targetNode.id) {
+                    activeLine.isActive = false;
+                    activeLine.isDrawn = false;
+                    activeLine.element.style.display = 'none';
+                    activeLine.originNode.style.backgroundColor = '#f00';
+                    quit = true;
+                }
+            }
+        }
+
+        if (quit === true) {
+            return;
+        }
+
+        var lineEnd = findPos(event.target);
+        activeLine.x2 = lineEnd.x;
+        activeLine.y2 = lineEnd.y;
+        activeLine.isActive = false;
+        activeLine.originNode.style.backgroundColor = '#ff0';
     }
 }
 
@@ -1472,6 +1575,8 @@ function findPos(obj) {
 }
 
 function initDynamics() {
+
+    document.getElementById('ops').style.display = 'block';
 
     for (var i = 0; i < lines.length; i++) {
         lines[i].isActive = false;
@@ -1624,10 +1729,13 @@ function loop() {
 
             if (lines[i].isActive === true) {
 
-                drawLine(lines[i].x, lines[i].y, mouse.x, mouse.y, lines[i].element);
+                var lineStart = findPos(lines[i].originNode);
+                drawLine(lineStart.x + 50, lineStart.y + 50, mouse.x, mouse.y, lines[i].element);
             } else {
 
-                drawLine(lines[i].x, lines[i].y, lines[i].x2, lines[i].y2, lines[i].element);
+                var lineStart = findPos(lines[i].originNode);
+                var lineEnd = findPos(lines[i].targetNode);
+                drawLine(lineStart.x + 50, lineStart.y + 50, lineEnd.x + 50, lineEnd.y + 25, lines[i].element);
             }
         }
     }
@@ -1875,6 +1983,48 @@ function drawLine(x1, y1, x2, y2, line) {
     line.style.top = y1 + 0.5 * length * Math.sin(angle) + "px";
     line.style.left = x1 - 0.5 * length * (1 - Math.cos(angle)) + "px";
     line.style.transform = line.style.MozTransform = line.style.WebkitTransform = line.style.OTransform = line.style.MsTransform = "rotate(" + angle + "rad)";
+}
+
+function translatePt() {
+    document.getElementById('sub').textContent = 'Recursos não preemptivos:';
+    document.getElementById('rec1').textContent = 'Recurso #1';
+    document.getElementById('rec2').textContent = 'Recurso #2';
+    document.getElementById('rec3').textContent = 'Recurso #3';
+    document.getElementById('rec4').textContent = 'Recurso #4';
+    document.getElementById('proc1').textContent = 'Processo #1';
+    document.getElementById('proc2').textContent = 'Processo #2';
+    document.getElementById('legenda').textContent = 'Legenda:';
+    document.getElementById('exec').textContent = 'Executando';
+    document.getElementById('crit').textContent = 'Executando região crítica';
+    document.getElementById('bloq').textContent = 'Bloqueado';
+}
+
+function translateEn() {
+    document.getElementById('sub').textContent = 'Non-preemptive resources:';
+    document.getElementById('rec1').textContent = 'Resource #1';
+    document.getElementById('rec2').textContent = 'Resource #2';
+    document.getElementById('rec3').textContent = 'Resource #3';
+    document.getElementById('rec4').textContent = 'Resource #4';
+    document.getElementById('proc1').textContent = 'Process #1';
+    document.getElementById('proc2').textContent = 'Process #2';
+    document.getElementById('legenda').textContent = 'Label:';
+    document.getElementById('exec').textContent = 'Executing';
+    document.getElementById('crit').textContent = 'Executing critical region';
+    document.getElementById('bloq').textContent = 'Blocked';
+}
+
+function translateEs() {
+    document.getElementById('sub').textContent = 'Recursos no preemptivos:';
+    document.getElementById('rec1').textContent = 'Recurso #1';
+    document.getElementById('rec2').textContent = 'Recurso #2';
+    document.getElementById('rec3').textContent = 'Recurso #3';
+    document.getElementById('rec4').textContent = 'Recurso #4';
+    document.getElementById('proc1').textContent = 'Proceso #1';
+    document.getElementById('proc2').textContent = 'Proceso #2';
+    document.getElementById('legenda').textContent = 'Leyenda:';
+    document.getElementById('exec').textContent = 'Ejecutando';
+    document.getElementById('crit').textContent = 'Ejecutando región crítica';
+    document.getElementById('bloq').textContent = 'Bloqueado';
 }
 
     ///***** END APLICATION CODE BLOCK *****///
