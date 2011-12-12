@@ -71,7 +71,7 @@ div {
     position: absolute;
     border: 0;
     border-bottom: 6px solid #f00;
-    z-index: -1000;
+    z-index: -980;
 }
 
 #leg {
@@ -123,10 +123,43 @@ div {
     color: #f00;
     z-index: 1000;
 }
+
+#wm {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 550px;
+    margin-left: -225px;
+    margin-top: -85px;
+    color: #99b;
+    z-index: -1000;
+}
+
+.ttl {
+    display: block;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.nm {
+    display: block;
+}
+
 </style>
 </head>
 
 <body>
+
+    <div id="wm">
+        <span id="int" class="ttl">Integrantes:</span>
+        <span class="nm">Hélio de Oliveira Bianchi - helioobianchi@gmail.com</span>
+        <span class="nm">Jorge Consagração - jorgeconsagracao@hotmail.com</span>
+        <span class="nm">Jonatas Esteves - jntesteves@gmail.com</span>
+        <span id="ori" class="ttl">Orientador:</span>
+        <span class="nm">Prof. Me. Wellington Pinto de Oliveira - wellington@aied.com.br</span>
+        <span id="ins" class="ttl">Instituição:</span>
+        <span class="nm">FATEC - Faculdade de Tecnologia da Zona Leste</span>
+    </div>
 
     <span id ="sub" class="box2d">Recursos não preemptivos:</span>
     <div id="rec1" class="box2d rec">Recurso #1</div>
@@ -1997,6 +2030,9 @@ function translatePt() {
     document.getElementById('exec').textContent = 'Executando';
     document.getElementById('crit').textContent = 'Executando região crítica';
     document.getElementById('bloq').textContent = 'Bloqueado';
+    document.getElementById('int').textContent = 'Integrantes:';
+    document.getElementById('ori').textContent = 'Orientador:';
+    document.getElementById('ins').textContent = 'Instituição:';
 }
 
 function translateEn() {
@@ -2011,6 +2047,9 @@ function translateEn() {
     document.getElementById('exec').textContent = 'Executing';
     document.getElementById('crit').textContent = 'Executing critical region';
     document.getElementById('bloq').textContent = 'Blocked';
+    document.getElementById('int').textContent = 'Members:';
+    document.getElementById('ori').textContent = 'Guide:';
+    document.getElementById('ins').textContent = 'Institution:';
 }
 
 function translateEs() {
@@ -2025,6 +2064,9 @@ function translateEs() {
     document.getElementById('exec').textContent = 'Ejecutando';
     document.getElementById('crit').textContent = 'Ejecutando región crítica';
     document.getElementById('bloq').textContent = 'Bloqueado';
+    document.getElementById('int').textContent = 'Miembros:';
+    document.getElementById('ori').textContent = 'Líder:';
+    document.getElementById('ins').textContent = 'Instituición:';
 }
 
     ///***** END APLICATION CODE BLOCK *****///
